@@ -1,0 +1,165 @@
+{
+  "schema_version": "v1",
+  "name": "multi-agent-rag",
+  "description": "Two-agent RAG: Researcher (retrieve+summarize) \u2192 Writer (refine+citation). Astra DB vector store.",
+  "nodes": [
+    {
+      "id": "input_text",
+      "type": "TextInput",
+      "position": {
+        "x": 50,
+        "y": 80
+      },
+      "data": {
+        "label": "User Message"
+      }
+    },
+    {
+      "id": "embeddings",
+      "type": "Embeddings",
+      "position": {
+        "x": 280,
+        "y": 260
+      },
+      "data": {
+        "provider": "ollama",
+        "model": "all-minilm:latest",
+        "base_url": "http://localhost:11434"
+      }
+    },
+    {
+      "id": "astra_vector",
+      "type": "AstraDBVectorStore",
+      "position": {
+        "x": 520,
+        "y": 260
+      },
+      "data": {
+        "api_endpoint": "${ASTRA_DB_API_ENDPOINT}",
+        "token": "${ASTRA_DB_APP_TOKEN}",
+        "keyspace": "${ASTRA_DB_KEYSPACE}",
+        "collection": "${ASTRA_COLLECTION}",
+        "metric": "cosine",
+        "dimension": 384
+      }
+    },
+    {
+      "id": "retriever",
+      "type": "VectorRetriever",
+      "position": {
+        "x": 760,
+        "y": 260
+      },
+      "data": {
+        "k": 5
+      }
+    },
+    {
+      "id": "researcher_llm",
+      "type": "LLM",
+      "position": {
+        "x": 1000,
+        "y": 80
+      },
+      "data": {
+        "provider": "ollama",
+        "model": "llama3:8b",
+        "base_url": "http://localhost:11434",
+        "system_prompt": "You are Researcher. Use retrieved docs to answer concisely with bullet points and inline citations like [S1], [S2]."
+      }
+    },
+    {
+      "id": "writer_llm",
+      "type": "LLM",
+      "position": {
+        "x": 1280,
+        "y": 80
+      },
+      "data": {
+        "provider": "ollama",
+        "model": "llama3:8b",
+        "base_url": "http://localhost:11434",
+        "system_prompt": "You are Writer. Refine Researcher output for clarity, merge overlapping points, and keep citations."
+      }
+    },
+    {
+      "id": "compose_prompt",
+      "type": "PromptTemplate",
+      "position": {
+        "x": 1000,
+        "y": 200
+      },
+      "data": {
+        "template": "Question: {{question}}\\nContext (top docs):\\n{{context}}\\n\\nProduce a focused answer with short bullets and cite sources as [S#]."
+      }
+    },
+    {
+      "id": "router",
+      "type": "Router",
+      "position": {
+        "x": 1160,
+        "y": 200
+      },
+      "data": {}
+    },
+    {
+      "id": "chat_output",
+      "type": "ChatOutput",
+      "position": {
+        "x": 1480,
+        "y": 80
+      },
+      "data": {
+        "label": "Chat"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "input_text",
+      "target": "retriever",
+      "sourceHandle": "text",
+      "targetHandle": "query"
+    },
+    {
+      "source": "embeddings",
+      "target": "astra_vector",
+      "sourceHandle": "embeddings",
+      "targetHandle": "embeddings"
+    },
+    {
+      "source": "astra_vector",
+      "target": "retriever",
+      "sourceHandle": "store",
+      "targetHandle": "store"
+    },
+    {
+      "source": "retriever",
+      "target": "compose_prompt",
+      "sourceHandle": "documents",
+      "targetHandle": "context"
+    },
+    {
+      "source": "input_text",
+      "target": "compose_prompt",
+      "sourceHandle": "text",
+      "targetHandle": "question"
+    },
+    {
+      "source": "compose_prompt",
+      "target": "researcher_llm"
+    },
+    {
+      "source": "researcher_llm",
+      "target": "router"
+    },
+    {
+      "source": "router",
+      "target": "writer_llm"
+    },
+    {
+      "source": "writer_llm",
+      "target": "chat_output"
+    }
+  ]
+}
