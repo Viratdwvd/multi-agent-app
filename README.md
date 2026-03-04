@@ -1,4 +1,5 @@
 # 🧩 Multi‑Agent RAG (Langflow + Streamlit + Astra DB) — Free Tier Setup
+Link for direct access : https://multi-agent-app-t2sygtgjvehg8uygmhn2zb.streamlit.app/
 
 This template recreates the Tech With Tim multi‑agent RAG idea using **Langflow** for agent graphs, **Streamlit** for UI, and **Astra DB** for vector storage. It is designed to run **for ₹0** using:
 - Streamlit Community Cloud (hosted URL)
