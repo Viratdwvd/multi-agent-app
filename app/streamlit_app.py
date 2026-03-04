@@ -12,7 +12,7 @@ import requests
 from langflow_client import LangflowClient
 
 # Optional Astra + PDF/HTML parsing for ingestion
-from astrapy.db import AstraDB
+from astrapy import DataAPIClient
 from pypdf import PdfReader
 from bs4 import BeautifulSoup
 
